@@ -8,12 +8,12 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-fun writableCell(index: Int, row: Row): Cell {
-    val cell = row.getCell(index)
+fun Row.writableCell(index: Int): Cell {
+    val cell = this.getCell(index)
     if (cell != null) {
         return cell
     }
-    return row.createCell(index, CellType.STRING)
+    return this.createCell(index, CellType.STRING)
 }
 
 fun Cell.cellAsLocalDate(): LocalDate {
@@ -22,6 +22,9 @@ fun Cell.cellAsLocalDate(): LocalDate {
         return rowDateTime.toLocalDate()
     }
     if (cellType == CellType.STRING) {
+        if (stringCellValue.length > 10) {
+            return LocalDate.parse(stringCellValue.substring(0, 10), DateTimeFormatter.ISO_LOCAL_DATE)
+        }
         return LocalDate.parse(stringCellValue, DateTimeFormatter.ISO_LOCAL_DATE)
     }
     throw IllegalStateException("row ${row.rowNum} cell $columnIndex can not recognize date $cellType " + this.toString())
@@ -41,7 +44,14 @@ fun Cell.cellAsBigDecimal(): BigDecimal {
     return BigDecimal.valueOf(numericCellValue)
 }
 
-fun cellAsInt(cell: Cell): Int {
+fun Cell.cellAsLong(): Long {
+    if (cellType != CellType.NUMERIC) {
+        throw IllegalStateException("row ${row.rowNum} cell ${columnIndex} not numeric type but ${cellType}")
+    }
+    return numericCellValue.toLong()
+}
+
+fun Cell.cellAsInt(cell: Cell): Int {
     if (cell.cellType != CellType.NUMERIC) {
         throw IllegalStateException("row ${cell.row.rowNum} cell ${cell.columnIndex} not numeric type but ${cell.cellType}")
     }

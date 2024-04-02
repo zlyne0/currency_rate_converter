@@ -5,6 +5,7 @@ import org.apache.poi.ss.usermodel.Row
 import org.apache.poi.ss.usermodel.Workbook
 import org.apache.poi.ss.usermodel.WorkbookFactory
 import promitech.currencyrateconverter.model.Currency
+import promitech.currencyrateconverter.model.Money
 import java.io.Closeable
 import java.io.InputStream
 import java.lang.IllegalStateException
@@ -85,6 +86,11 @@ class NbpPlnRateRepository(ratesFileName: String): Closeable {
     }
 
     data class Rate(val rateValue: BigDecimal, val units: BigDecimal) {
+
+        fun convertToPLN(money: Money): Money {
+            return Money.valueOf(convertToPLN(money.amount), Currency.PLN)
+        }
+
         fun convertToPLN(amount: BigDecimal): BigDecimal {
             return rateValue.multiply(amount).divide(units, 4, RoundingMode.HALF_UP)
         }

@@ -51,10 +51,10 @@ class CurrencyRateInOutFile(val inputFileName: String, val outputFileName: Strin
         convertedList.forEachIndexed { index: Int, converted: Converted ->
             val row = sheet.getRow(index + contentRowOffset)
 
-            val cell = writableCell(3, row)
+            val cell = row.writableCell(3)
             cell.setCellValue(converted.value.toDouble())
 
-            val currencyCell = writableCell(4, row)
+            val currencyCell = row.writableCell(4)
             currencyCell.setCellValue(converted.currency)
         }
     }
