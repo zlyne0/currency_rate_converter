@@ -29,6 +29,9 @@ class CurrencyRateInOutFile(val inputFileName: String, val outputFileName: Strin
         val list = mutableListOf<CurrencyValue>()
         for (rowIndex in sheet.firstRowNum + contentRowOffset .. sheet.lastRowNum) {
             val row = sheet.getRow(rowIndex)
+            if (row == null) {
+                break
+            }
             list.add(CurrencyValue(
                 row.getCell(0).cellAsLocalDate(),
                 row.getCell(1).cellAsString(),

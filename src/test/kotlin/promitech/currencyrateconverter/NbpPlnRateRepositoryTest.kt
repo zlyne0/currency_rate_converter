@@ -1,11 +1,14 @@
 package promitech.currencyrateconverter
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.comparables.shouldBeEqualComparingTo
+import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.startWith
+import promitech.currencyrateconverter.NbpPlnRateRepository.Rate
 import promitech.currencyrateconverter.model.Currency.Companion.JPY
 import promitech.currencyrateconverter.model.Currency.Companion.USD
-import promitech.currencyrateconverter.NbpPlnRateRepository.Rate
 import java.math.BigDecimal
 import java.time.LocalDate
 
@@ -14,11 +17,24 @@ class NbpPlnRateRepositoryTest : StringSpec({
     lateinit var rateRepository: NbpPlnRateRepository
 
     beforeSpec {
-        rateRepository = NbpPlnRateRepository("archiwum_tab_a_2022.xls")
+        rateRepository = NbpPlnRateRepository(mapOf(2022 to "archiwum_tab_a_2022.xls"))
     }
 
     afterSpec {
         rateRepository.close()
+    }
+
+    "should throw exception when can not find rates for year" {
+        val exception = shouldThrow<IllegalStateException> {
+            rateRepository.rate(LocalDate.of(2015, 12, 9), USD)
+        }
+        exception.message should startWith("can not find rates file name by year 2015")
+    }
+
+    "should load rates beyond repository date" {
+        // TODO: powinien zaczytac ostatni dzien pracy z 2021 roku
+        val rate: Rate = rateRepository.rate(LocalDate.of(2022, 1, 2), USD)
+        TODO()
     }
 
     "should load rates" {

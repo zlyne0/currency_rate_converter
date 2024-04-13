@@ -1,10 +1,21 @@
 package promitech.currencyrateconverter.model
 
+import promitech.currencyrateconverter.model.Currency.Companion.PLN
 import promitech.report.exante.DividentReport
 import java.math.BigDecimal
 import java.math.RoundingMode
 
 data class Money(val amount: BigDecimal, val currency: Currency) {
+
+    fun isEqualInScale(money: Money, scale: Int): Boolean {
+        val a = this.amount.setScale(scale, RoundingMode.DOWN)
+        val b = money.amount.setScale(scale, RoundingMode.DOWN)
+        return a.compareTo(b) == 0
+    }
+
+    fun isZero(): Boolean {
+        return amount.compareTo(BigDecimal.ZERO) == 0
+    }
 
     operator fun plus(money: Money): Money {
         if (this.currency != money.currency) {
@@ -38,7 +49,18 @@ data class Money(val amount: BigDecimal, val currency: Currency) {
         return this.amount.compareTo(money.amount)
     }
 
+    fun multiply(multiplicand: BigDecimal): Money {
+        return Money(amount.multiply(multiplicand), currency)
+    }
+
+    override fun toString(): String {
+        return "" + amount + " " + currency.value
+    }
+
     companion object {
+
+        val ZERO_PLN = Money.zero(PLN)
+
         fun valueOf(amount: Int, currency: Currency): Money {
             return Money(BigDecimal.valueOf(amount.toLong()), currency)
         }

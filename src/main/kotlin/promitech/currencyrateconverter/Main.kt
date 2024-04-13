@@ -6,7 +6,13 @@ import promitech.currencyrateconverter.model.Currency
 
 fun main() {
 
-    val rateRepository = NbpPlnRateRepository("archiwum_tab_a_2022.xls")
+    val rateRepository = NbpPlnRateRepository(
+        mapOf(
+            2021 to "archiwum_tab_a_2021.xls",
+            2022 to "archiwum_tab_a_2022.xls",
+            2023 to "archiwum_tab_a_2023.xls",
+        )
+    )
     val moneyInOutFile = CurrencyRateInOutFile("currency_rate.xlsx", "currency_rate_output.xlsx")
 
     for (moneyEntry in moneyInOutFile.moneyEntries) {
@@ -14,11 +20,11 @@ fun main() {
     }
 
     fun convert(a: CurrencyValue): Converted {
-        if (a.currency == "PLN") {
+        if (a.currency == Currency.PLN.value) {
             return Converted(a, a.amount, a.currency)
         }
         val rate = rateRepository.rate(a.date, Currency(a.currency))
-        return Converted(a, rate.convertToPLN(a.amount), "PLN")
+        return Converted(a, rate.convertToPLN(a.amount), Currency.PLN.value)
     }
 
     val convertedList = moneyInOutFile.moneyEntries.asSequence()

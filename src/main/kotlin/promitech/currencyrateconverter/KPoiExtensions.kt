@@ -31,6 +31,9 @@ fun Cell.cellAsLocalDate(): LocalDate {
 }
 
 fun Cell.cellAsString(): String {
+    if (cellType == CellType.NUMERIC) {
+        return this.numericCellValue.toString()
+    }
     if (cellType != CellType.STRING) {
         throw IllegalStateException("row ${row.rowNum} cell ${this.columnIndex} not string type but ${cellType}")
     }
@@ -51,9 +54,9 @@ fun Cell.cellAsLong(): Long {
     return numericCellValue.toLong()
 }
 
-fun Cell.cellAsInt(cell: Cell): Int {
-    if (cell.cellType != CellType.NUMERIC) {
-        throw IllegalStateException("row ${cell.row.rowNum} cell ${cell.columnIndex} not numeric type but ${cell.cellType}")
+fun Cell.cellAsInt(): Int {
+    if (cellType != CellType.NUMERIC) {
+        throw IllegalStateException("row ${row.rowNum} cell ${columnIndex} not numeric type but ${cellType}")
     }
-    return cell.numericCellValue.toInt()
+    return numericCellValue.toInt()
 }

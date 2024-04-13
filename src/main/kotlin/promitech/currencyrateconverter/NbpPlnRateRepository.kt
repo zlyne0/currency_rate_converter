@@ -15,23 +15,39 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.time.LocalDate
 
-class NbpPlnRateRepository(ratesFileName: String): Closeable {
+class NbpPlnRateRepository(val ratesFilesNameByYear: Map<Int, String>): Closeable {
 
-    private val workbook: Workbook
+    private val workbookPerYear = HashMap<Int, Workbook>()
 
-    init {
+    fun loadWorkbook(year: Int): Workbook {
+        var workbook = workbookPerYear.get(year)
+        if (workbook != null) {
+            return workbook
+        }
+        val ratesFileName = ratesFilesNameByYear.get(year)
+        if (ratesFileName == null) {
+            throw IllegalStateException("can not find rates file name by year $year")
+        }
         val inputStream: InputStream = Files.newInputStream(Paths.get(ratesFileName))
         workbook = WorkbookFactory.create(inputStream)
+        workbookPerYear.put(year, workbook)
+        inputStream.close()
+        return workbook
+    }
+
+    fun convertToPLN(date: LocalDate, money: Money): Money {
+        return rate(date, money.currency).convertToPLN(money)
     }
 
     fun rate(date: LocalDate, currency: Currency): Rate {
-        val currencyColumn = findCurrencyColumn(currency)
-        val dataRow = findDateRow(date)
+        val workbook = loadWorkbook(date.year)
+        val currencyColumn = findCurrencyColumn(currency, workbook)
+        val dataRow = findDateRow(date, workbook)
         val rateCell = dataRow.getCell(currencyColumn)
-        return Rate(rateCell.cellAsBigDecimal(), findNumberOfUnitRow(currencyColumn))
+        return Rate(rateCell.cellAsBigDecimal(), findNumberOfUnitRow(currencyColumn, workbook))
     }
 
-    private fun findDateRow(date: LocalDate): Row {
+    private fun findDateRow(date: LocalDate, workbook: Workbook): Row {
         val sheet = workbook.getSheetAt(0)
         var previewDateRow: Row? = null
         for (row in sheet.rowIterator()) {
@@ -53,12 +69,10 @@ class NbpPlnRateRepository(ratesFileName: String): Closeable {
         throw IllegalStateException("can not find rate for date: " + date)
     }
 
-    private fun findCurrencyColumn(currency: Currency): Int {
+    private fun findCurrencyColumn(currency: Currency, workbook: Workbook): Int {
         val sheet = workbook.getSheetAt(0)
-
         for (row in sheet.rowIterator()) {
             val firstCell = row.getCell(0)
-
             if (firstCell.cellType == CellType.STRING && firstCell.stringCellValue.equals("kod ISO")) {
                 for (cell in row.cellIterator()) {
                     if (cell.cellAsString() == currency.value) {
@@ -70,7 +84,7 @@ class NbpPlnRateRepository(ratesFileName: String): Closeable {
         throw IllegalStateException("can not find row with currency ISO code")
     }
 
-    private fun findNumberOfUnitRow(currencyColumn: Int): BigDecimal {
+    private fun findNumberOfUnitRow(currencyColumn: Int, workbook: Workbook): BigDecimal {
         val sheet = workbook.getSheetAt(0)
         for (row in sheet.rowIterator()) {
             val firstCell = row.getCell(0)
@@ -82,7 +96,9 @@ class NbpPlnRateRepository(ratesFileName: String): Closeable {
     }
 
     override fun close() {
-        workbook.close()
+        for ((_, workbook) in workbookPerYear) {
+            workbook.close()
+        }
     }
 
     data class Rate(val rateValue: BigDecimal, val units: BigDecimal) {

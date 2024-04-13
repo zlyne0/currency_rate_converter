@@ -20,7 +20,7 @@ class DividentReportTest : StringSpec({
 
     "can load and save" {
         // given
-        val rateRepository = NbpPlnRateRepository("archiwum_tab_a_2023.xls")
+        val rateRepository = NbpPlnRateRepository(mapOf(2023 to "archiwum_tab_a_2023.xls"))
 
         // when
         val report = DividentReport("classpath:/exante_divident_report_example.xlsx", "exante_divident_report_example_output.xlsx")
